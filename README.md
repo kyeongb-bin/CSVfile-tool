@@ -1,5 +1,8 @@
 # csv시각화 도구
 
+필요한 패키지
+> pip install python-dotenv openai streamlit pandas matplotlib seaborn
+
 .venv 세팅
 > python3 -m venv .venv
 
