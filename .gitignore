@@ -1,4 +1,12 @@
+# 가상환경 제외
 .venv/
 __pycache__/
 *.pyc
+
+# 환경 설정 파일 제외
+.env
 .DS_Store
+
+# IDE 설정 파일 제외
+.vscode/
+.idea/
