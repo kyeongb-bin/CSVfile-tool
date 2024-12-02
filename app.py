@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
+# 맷플롤립 한글 설정
 import matplotlib.pyplot as plt
+plt.rc('font', family='AppleGothic')
+plt.rcParams['axes.unicode_minus'] = False
 import seaborn as sns
 from dotenv import load_dotenv
 import os
@@ -48,8 +51,18 @@ st.title("CSV 데이터 시각화 대시보드")
 uploaded_file = st.file_uploader("CSV 파일을 업로드하세요", type=['csv'])
 
 if uploaded_file is not None:
-    # 데이터 읽기
-    df = pd.read_csv(uploaded_file)
+    try:
+        # 먼저 UTF-8로 시도
+        df = pd.read_csv(uploaded_file, encoding='utf-8')
+    except UnicodeDecodeError:
+        try:
+            # UTF-8 실패시 CP949로 시도
+            uploaded_file.seek(0)  # 파일 포인터를 처음으로 되돌림
+            df = pd.read_csv(uploaded_file, encoding='cp949')
+        except UnicodeDecodeError:
+            # CP949 실패시 다른 인코딩 시도
+            uploaded_file.seek(0)
+            df = pd.read_csv(uploaded_file, encoding='euc-kr')
     
     # AI 추천 받기
     if st.button("AI 시각화 추천 받기"):
@@ -73,12 +86,14 @@ if uploaded_file is not None:
     # 그래프 그리기
     fig, ax = plt.subplots(figsize=(10, 6))
     
+    plt.tick_params(axis='both', labelsize=5)  # x, y축 눈금 레이블 크기를 8로 설정
+    
     if chart_type == "산점도":
         sns.scatterplot(data=df, x=x_column, y=y_column)
     elif chart_type == "선 그래프":
         plt.plot(df[x_column], df[y_column])
     elif chart_type == "막대 그래프":
-        sns.barplot(data=df, x=x_column, y=y_column)
+        sns.barplot(data=df, x=x_column, y=y_column, ci=None)
     elif chart_type == "히스토그램":
         plt.hist(df[x_column])
     elif chart_type == "박스플롯":
@@ -86,5 +101,5 @@ if uploaded_file is not None:
     elif chart_type == "히트맵":
         sns.heatmap(df.corr(), annot=True)
     
-    plt.title(f"{chart_type}: {x_column} vs {y_column}")
+    plt.title(f"{chart_type}: {x_column} {y_column}")
     st.pyplot(fig)
