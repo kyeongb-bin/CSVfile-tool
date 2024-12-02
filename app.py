@@ -14,6 +14,12 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 def get_visualization_recommendation(df):
+    # 사용 가능한 그래프 목록
+    available_plots = [
+        "선 그래프", "막대 그래프", "히스토그램", "박스플롯", 
+        "바이올린 플롯", "스트립 플롯", "스웜 플롯", "카운트 플롯"
+    ]
+    
     # 데이터셋 정보 생성
     data_info = f"""
     데이터셋 정보:
@@ -21,7 +27,10 @@ def get_visualization_recommendation(df):
     - 데이터 타입: {df.dtypes.to_dict()}
     - 수치형 컬럼 통계: {df.describe().to_dict()}
     
-    이 데이터를 시각화하기 위한 최적의 그래프 유형과 사용할 컬럼을 추천해주세요.
+    사용 가능한 그래프 종류:
+    {', '.join(available_plots)}
+    
+    위 그래프 중에서 이 데이터를 시각화하기 위한 최적의 그래프와 컬럼을 추천해주세요.
     답변 형식:
     1. 추천 그래프:
     2. X축 추천:
@@ -57,7 +66,7 @@ if uploaded_file is not None:
     except UnicodeDecodeError:
         try:
             # UTF-8 실패시 CP949로 시도
-            uploaded_file.seek(0)  # 파일 포인터를 처음으로 되돌림
+            uploaded_file.seek(0)
             df = pd.read_csv(uploaded_file, encoding='cp949')
         except UnicodeDecodeError:
             # CP949 실패시 다른 인코딩 시도
@@ -72,11 +81,13 @@ if uploaded_file is not None:
     
     # 데이터 미리보기
     st.subheader("데이터 미리보기")
-    st.dataframe(df.head())
+    st.dataframe(df, height=300, use_container_width=True)
     
     # 시각화 옵션
-    chart_type = st.selectbox("그래프 종류 선택", 
-        ["산점도", "선 그래프", "막대 그래프", "히스토그램", "박스플롯", "히트맵"])
+    chart_type = st.selectbox("그래프 종류 선택", [
+        "선 그래프", "막대 그래프", "히스토그램", "박스플롯",
+        "바이올린 플롯", "스트립 플롯", "스웜 플롯", "카운트 플롯"
+    ])
     
     # 컬럼 선택
     columns = df.columns.tolist()
@@ -85,12 +96,9 @@ if uploaded_file is not None:
     
     # 그래프 그리기
     fig, ax = plt.subplots(figsize=(10, 6))
+    plt.tick_params(axis='both', labelsize=5)
     
-    plt.tick_params(axis='both', labelsize=5)  # x, y축 눈금 레이블 크기를 8로 설정
-    
-    if chart_type == "산점도":
-        sns.scatterplot(data=df, x=x_column, y=y_column)
-    elif chart_type == "선 그래프":
+    if chart_type == "선 그래프":
         plt.plot(df[x_column], df[y_column])
     elif chart_type == "막대 그래프":
         sns.barplot(data=df, x=x_column, y=y_column, ci=None)
@@ -98,8 +106,14 @@ if uploaded_file is not None:
         plt.hist(df[x_column])
     elif chart_type == "박스플롯":
         sns.boxplot(data=df, x=x_column, y=y_column)
-    elif chart_type == "히트맵":
-        sns.heatmap(df.corr(), annot=True)
+    elif chart_type == "바이올린 플롯":
+        sns.violinplot(data=df, x=x_column, y=y_column)
+    elif chart_type == "스트립 플롯":
+        sns.stripplot(data=df, x=x_column, y=y_column)
+    elif chart_type == "스웜 플롯":
+        sns.swarmplot(data=df, x=x_column, y=y_column)
+    elif chart_type == "카운트 플롯":
+        sns.countplot(data=df, x=x_column)
     
     plt.title(f"{chart_type}: {x_column} {y_column}")
     st.pyplot(fig)
